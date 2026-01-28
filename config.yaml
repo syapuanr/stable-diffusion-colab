@@ -1,0 +1,45 @@
+# System Configuration
+system:
+  device: "cuda"
+  dtype: "float16"  # float16 untuk GPU, float32 untuk CPU
+  vae_dtype: "float16"
+  attention_slicing: true
+  xformers_enabled: true
+  cpu_offload: false  # Aktifkan jika GPU memory kurang
+
+# Model Paths
+models:
+  base_path: "./models"
+  checkpoint_path: "./models/checkpoints"
+  lora_path: "./models/loras"
+  vae_path: "./models/vae"
+  controlnet_path: "./models/controlnet"
+  embedding_path: "./models/embeddings"
+
+# Default Generation Settings
+generation:
+  width: 512
+  height: 512
+  num_inference_steps: 20
+  guidance_scale: 7.5
+  scheduler: "DPMSolverMultistep"  # Euler, DDIM, DPMSolverMultistep, etc
+  
+# Memory Settings
+memory:
+  max_batch_size: 1
+  vae_tiling: true
+  vae_tile_size: 512
+  enable_model_cpu_offload: false
+  enable_sequential_cpu_offload: false
+
+# UI Settings
+ui:
+  share: false
+  server_port: 7860
+  queue_concurrency: 1
+  
+# Tunnel Settings
+tunnel:
+  enabled: true
+  type: "ngrok"  # ngrok atau cloudflared
+  ngrok_token: ""  # Isi dengan token ngrok Anda
