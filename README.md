@@ -21,8 +21,8 @@ WebUI untuk Stable Diffusion yang dioptimasi untuk Google Colab dengan fitur len
 ## Manual Installation
 
 ```bash
-git clone https://github.com/USERNAME/your-sd-webui.git
-cd your-sd-webui
+git clone https://github.com/syapuanr/sd-webui.git
+cd sd-webui
 pip install -r requirements.txt
 python main.py --share
 Configuration
