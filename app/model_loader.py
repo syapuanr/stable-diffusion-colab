@@ -16,7 +16,6 @@ from .memory_manager import MemoryManager
 class ModelLoader:
     """Loads and manages Stable Diffusion models"""
     
-    # Supported schedulers
     SCHEDULERS = {
         'DPMSolverMultistep': DPMSolverMultistepScheduler,
         'Euler': EulerAncestralDiscreteScheduler,
@@ -35,8 +34,6 @@ class ModelLoader:
         
     def detect_model_type(self, model_path):
         """Detect if model is SD 1.5, SD 2.x, or SDXL"""
-        # This is a simplified detection
-        # In production, you'd check config files
         if 'xl' in model_path.lower() or 'sdxl' in model_path.lower():
             return 'sdxl'
         elif 'sd2' in model_path.lower() or '2-1' in model_path.lower():
@@ -58,16 +55,13 @@ class ModelLoader:
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"Model file not found: {checkpoint_path}")
         
-        # Auto-detect model type if not specified
         if model_type is None:
             model_type = self.detect_model_type(checkpoint_path)
         
         print(f"Detected model type: {model_type.upper()}")
         
-        # Get appropriate pipeline class
         PipelineClass = self.get_pipeline_class(model_type)
         
-        # Load pipeline from single file
         try:
             if checkpoint_path.endswith('.safetensors'):
                 pipe = PipelineClass.from_single_file(
@@ -95,7 +89,6 @@ class ModelLoader:
         """Load model from Hugging Face Hub"""
         print(f"\nLoading model from HuggingFace: {model_id}")
         
-        # Auto-detect model type if not specified
         if model_type is None:
             model_type = self.detect_model_type(model_id)
         
@@ -106,13 +99,29 @@ class ModelLoader:
                 model_id,
                 torch_dtype=self.dtype,
                 use_safetensors=True,
-                safety_checker=None
+                safety_checker=None,
+                requires_safety_checker=False,
+                # Add these to avoid metadata issues
+                local_files_only=False,
+                resume_download=True
             )
             print("✓ Model loaded from HuggingFace")
             
         except Exception as e:
             print(f"✗ Error loading model: {e}")
-            raise
+            # Try without safetensors as fallback
+            try:
+                print("Trying without safetensors...")
+                pipe = PipelineClass.from_pretrained(
+                    model_id,
+                    torch_dtype=self.dtype,
+                    safety_checker=None,
+                    requires_safety_checker=False
+                )
+                print("✓ Model loaded (without safetensors)")
+            except Exception as e2:
+                print(f"✗ Fallback also failed: {e2}")
+                raise
         
         return pipe, model_type
     
@@ -165,17 +174,7 @@ class ModelLoader:
     
     def load_model(self, model_path=None, model_id=None, vae_path=None, 
                    lora_paths=None, lora_weights=None, scheduler=None):
-        """
-        Main method to load complete model with all components
-        
-        Args:
-            model_path: Path to local .safetensors/.ckpt file
-            model_id: HuggingFace model ID
-            vae_path: Path to custom VAE
-            lora_paths: List of LoRA file paths
-            lora_weights: List of LoRA weights (default 1.0)
-            scheduler: Scheduler name
-        """
+        """Main method to load complete model with all components"""
         self.memory_manager.clear_cache()
         
         # Load base model
@@ -184,7 +183,6 @@ class ModelLoader:
         elif model_id:
             pipe, model_type = self.load_model_from_hub(model_id)
         else:
-            # Load default model
             default_model = "runwayml/stable-diffusion-v1-5"
             print(f"No model specified, loading default: {default_model}")
             pipe, model_type = self.load_model_from_hub(default_model)
